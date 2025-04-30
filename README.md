@@ -1,110 +1,174 @@
-# ChatGPT IRC Bot
-ChatGPT IRC bot is a simple IRC bot written in Python. It connects to OpenAI endpoints to answer questions or generate images.
+# IRC-GPT Bot (T800) – v1.2.1
 
-ChatGPT IRC Bot uses official bindings from OpenAI to interact with the API through HTTP requests:
-https://platform.openai.com/docs/api-reference
+Um bot de IRC em Python que usa a OpenAI para responder perguntas, gerar imagens e manter contexto de conversa.  
+Fork do projeto [knrd1/chatgpt](https://github.com/knrd1/chatgpt), com recursos adicionais e métricas avançadas.
 
-### Prerequisities:
+---
 
-Create an account and obtain your API key: https://platform.openai.com/account/api-keys
+## 🚀 Funcionalidades
 
-Install python3 and the official Python bindings:
-```
-$ apt install python3 python3-pip (Debian/Ubuntu)
-$ yum install python3 python3-pip (RedHat/CentOS)
-$ pip3 install openai==0.28 pyshorteners
-$ git clone https://github.com/knrd1/chatgpt.git
-$ cd chatgpt
-$ cp example-chat.conf chat.conf
-```
-### Configuration:
+- **Chat Completions** (`/v1/chat/completions`)  
+  Modelos suportados: GPT-4, GPT-4o, GPT-4 Turbo, GPT-3.5 Turbo e variantes.
 
-Edit chat.conf and change variables. Example configuration for IRCNet:
+- **Legacy Completions** (`/v1/completions`)  
+  Modelos: `davinci-002`, `babbage-002`, `gpt-3.5-turbo-instruct`.
 
-Variable "context" is optional: you can leave it blank or enter what you want the bot to know and how you want the bot to behave. This will work only with models connecting to endpoint /v1/chat/completions
+- **Geração de Imagens** (`/v1/images/generations`)  
+  Modelos: `dall-e-2`, `dall-e-3` — retorna URL TinyURL.
 
-```
-[openai]
-api_key = sk-XXXXXXXXXXXXXXX
+- **Contexto de Conversa**  
+  Armazena até N mensagens por canal/usuário e prefixa `<nick>: mensagem` no prompt.
 
-[chatcompletion]
-model = gpt-3.5-turbo
-role = user
-context = You are a helpful and friendly bot on IRC channel #linux.
-temperature = 0.8
-max_tokens = 1000
-top_p = 1
-frequency_penalty = 0
-presence_penalty = 0
-request_timeout = 60
+- **Burst Summarization**  
+  Se X mensagens chegam em Y segundos, sintetiza um resumo automático para economizar tokens.
 
-[irc]
-server = open.ircnet.net
-port = 6667
-ssl = false
-channels = #linux,#github
-nickname = MyBot
-ident = mybot
-realname = My Bot
-password = 
-```
-### Connecting bot to IRC server:
-```
-$ python3 chatgpt.py
-```
-Use screen to run bot in the background and keep it running even after you log out of your session:
-```
-$ screen python3 chatgpt.py
-```
-To detach from the screen session (leaving your ChatGPT IRC Bot running in the background), press Ctrl + A followed by d (for "detach").
-If you need to reattach to the screen session later, use the following command:
-```
-screen -r
-```
-### Interaction:
-ChatGPT IRC Bot will interact only if you mention its nickname:
-```
-10:31:12 <@knrd1> ChatGPT: hello, how are you?
-10:31:14 < ChatGPT> Hi there, I'm doing well, thank you. How about you?
-10:35:56 <@knrd1> ChatGPT: do you like IRC?
-10:35:59 < ChatGPT> Yes, I like IRC. It is a great way to communicate with people from around the world.
+- **Rate-limit**  
+  Limite de 5 mensagens por usuário por minuto (aviso automático).
 
+- **Métricas de Uso**  
+  SQLite (`usage.db`) registra tokens e custo diário/mensal.  
+  Comando `!usage` exibe:  
+  - Tokens usados no dia/mês  
+  - Custo estimado (USD)  
+  - Total de chamadas API  
+  - Uptime, última inicialização/conexão  
+  - Uso de memória (RSS) e CPU do processo
+
+- **Comandos IRC**  
+  ```
+  !help     — lista comandos  
+  !status   — versão, estado e tokens desde startup  
+  !uptime   — tempo de atividade atual  
+  !model    — modelo configurado  
+  !usage    — estatísticas de uso (tokens, custo, CPU, RAM)  
+  !history  — (modo debug) exibe histórico de contexto
+  ```
+
+- **Debug & Raw**  
+  - `debug=true` → logs detalhados (INFO/DEBUG/ERRO)  
+  - `raw=true`   → dump de todo tráfego IRC cru
+
+- **Daemon & Graceful Shutdown**  
+  - Roda em segundo plano com `python-daemon`  
+  - Trata `SIGINT`/`SIGTERM`, envia `QUIT` antes de sair
+
+- **Formatação IRC**  
+  - Converte `**texto**` em negrito IRC (`texto`)  
+  - Quebra mensagens >392 caracteres respeitando espaços
+
+---
+
+## 🛠️ Pré-requisitos
+
+- Python 3.10+  
+- Biblioteca oficial OpenAI `>=1.76.0`  
+- `pyshorteners`, `python-daemon`, `tiktoken`  
+- Conta e **API Key** da OpenAI (inicia com `sk-…`)
+
+---
+
+## 📥 Instalação
+
+```bash
+git clone https://github.com/SEU_USUARIO/SEU_REPO.git irc-gpt
+cd irc-gpt
+
+python3 -m pip install --upgrade pip
+pip3 install   openai>=1.76.0   pyshorteners   python-daemon   tiktoken
 ```
-If you set the model to "dall-e-2" or "dall-e-3", the ChatGPT IRC Bot will return a shortened URL to the generated image:
+
+---
+
+## ⚙️ Configuração
+
+1. Copie o exemplo:
+   ```bash
+   cp chat-example.conf chat.conf
+   ```
+2. Edite `chat.conf`, ajustando:
+
+   ```ini
+   [openai]
+   api_key           = sk-XXXXXXXXXXXXXXXXXXXX
+
+   [chatcompletion]
+   model             = gpt-4o
+   context           = Você é um assistente educativo de IRC.
+   temperature       = 0.8
+   max_tokens        = 800
+   top_p             = 1
+   frequency_penalty = 0
+   presence_penalty  = 0
+   request_timeout   = 60
+
+   [irc]
+   server            = irc.exemplo.net
+   port              = 6697
+   ssl               = true
+   channels          = #canal1,#canal2
+   nickname          = IRC-GPT Bot (T800)
+   ident             = T800
+   realname          = Bot de IA via ChatGPT
+   password          =
+   debug             = true
+   raw               = false
+
+   [bot]
+   log_file          = /var/log/irc_gpt_bot.log
+   history_limit     = 10
+   burst_threshold   = 20
+   burst_window      = 60
+   burst_chunk_size  = 20
+   usage_db          = usage.db
+   monthly_start_day = 1
+   ```
+
+---
+
+## ▶️ Execução
+
+### Modo foreground (debug)
+```bash
+python3 chat.py
 ```
-17:33:16 <@knrd1> ChatGPT: impressionist style painting: two horses dancing on the street
-17:33:23 < ChatGPT> https://tinyurl.com/2hr5uf4w
+
+### Modo daemon (produção)
+- Ajuste `debug=false` em `chat.conf`
+- Execute:
+  ```bash
+  python3 chat.py &
+  ```
+
+---
+
+## 💬 Uso no IRC
+
+Mencione o nick (case-insensitive) terminando com `:` ou `?`:
 ```
-### Model endpoint compatibility
-
-ChatGPT IRC Bot can use three API endpoints: 
-
-Following models support endpoint /v1/chat/completions:
-
-> gpt-4o, gpt-4, gpt-4-turbo, gpt-4-turbo-preview, gpt-3.5-turbo
-
-Models that support /v1/completions (Legacy):
-
-> gpt-3.5-turbo-instruct, babbage-002, davinci-002
-
-Create an image using endpoint /v1/images/generations:
-
-> dall-e-2, dall-e-3
-
-More details about models: https://platform.openai.com/docs/models
-
-### Docker
-
-To build the Docker image, you can use the following command:
+<user> irc-gpt bot: qual o status?
+<bot> Bot operacional • v1.2.1 • tokens=1234
 ```
-docker build -t my-chatgpt-app .
-```
-To run the Docker container, you can use the following command:
-```
-docker run -it my-chatgpt-app
-```
-To detach from a running Docker, press Ctrl + P. While holding down Ctrl, press Q.
-To reattach to the container later, use the following command:
-```
-docker attach <container_id>
-```
+Em canais privados (PM), o bot responde sem prefixo.
+
+---
+
+## 🐳 Docker
+
+1. **Build**  
+   ```bash
+   docker build -t irc-gpt-bot .
+   ```
+2. **Run**  
+   ```bash
+   docker run -d      -v "$(pwd)/chat.conf:/app/chat.conf"      --name irc-gpt      irc-gpt-bot
+   ```
+
+---
+
+## 🔗 Links
+
+- API Reference: https://platform.openai.com/docs/api-reference  
+- Modelos: https://platform.openai.com/docs/models  
+- Projeto original: https://github.com/knrd1/chatgpt  
+
+> **Versão:** 1.2.1 • **Data:** 2025-04-29  
