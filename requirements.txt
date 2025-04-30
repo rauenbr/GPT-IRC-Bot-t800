@@ -1,2 +1,5 @@
-openai
+openai>=1.76.0
 pyshorteners
+python-daemon
+tiktoken
+psutil
