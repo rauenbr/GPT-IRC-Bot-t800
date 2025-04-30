@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-IRC-GPT Bot (T800) v1.2.1
+GPT-IRC Bot (T800) v1.2.1
 
 Requisitos:
 - Python 3.10+
@@ -450,8 +450,9 @@ def handle_command(cmd, target):
     elif lc == "!status":
         up = now - start_time
         send_message(target,
-            f"Bot v{SCRIPT_VERSION} • sess up={fmt_delta(up)} • "
-            f"tokens sess={total_tokens_used} (~${total_cost_used:.4f}) • model={model}"
+            f"GPT-IRC Bot (T800) v{SCRIPT_VERSION} by Rauen • sess up={fmt_delta(up)} • "
+            f"tokens sess={total_tokens_used} (~${total_cost_used:.4f}) • model={model} •"
+            f"https://github.com/rauenbr/GPT-IRC-Bot-t800"
         )
 
     elif lc == "!uptime":
