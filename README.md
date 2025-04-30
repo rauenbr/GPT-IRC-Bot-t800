@@ -1,7 +1,7 @@
 # IRC-GPT Bot (T800) – v1.2.1
 
 Um bot de IRC em Python que usa a OpenAI para responder perguntas, gerar imagens e manter contexto de conversa.  
-Fork do projeto [knrd1/chatgpt](https://github.com/knrd1/chatgpt), com recursos adicionais e métricas avançadas.
+Fork do projeto [knrd1/chatgpt](https://github.com/knrd1/chatgpt), mantido em [rauenbr/GPT-IRC-Bot-t800](https://github.com/rauenbr/GPT-IRC-Bot-t800).
 
 ---
 
@@ -53,16 +53,16 @@ Fork do projeto [knrd1/chatgpt](https://github.com/knrd1/chatgpt), com recursos 
   - Trata `SIGINT`/`SIGTERM`, envia `QUIT` antes de sair
 
 - **Formatação IRC**  
-  - Converte `**texto**` em negrito IRC (`texto`)  
+  - Converte `**texto**` em negrito IRC (`\x02texto\x02`)  
   - Quebra mensagens >392 caracteres respeitando espaços
 
 ---
 
-## 🛠️ Pré-requisitos
+## ⚙️ Pré-requisitos
 
 - Python 3.10+  
 - Biblioteca oficial OpenAI `>=1.76.0`  
-- `pyshorteners`, `python-daemon`, `tiktoken`  
+- `pyshorteners`, `python-daemon`, `tiktoken`, `psutil`  
 - Conta e **API Key** da OpenAI (inicia com `sk-…`)
 
 ---
@@ -70,11 +70,11 @@ Fork do projeto [knrd1/chatgpt](https://github.com/knrd1/chatgpt), com recursos 
 ## 📥 Instalação
 
 ```bash
-git clone https://github.com/SEU_USUARIO/SEU_REPO.git irc-gpt
+git clone https://github.com/rauenbr/GPT-IRC-Bot-t800.git irc-gpt
 cd irc-gpt
 
 python3 -m pip install --upgrade pip
-pip3 install   openai>=1.76.0   pyshorteners   python-daemon   tiktoken
+pip3 install   openai>=1.76.0   pyshorteners   python-daemon   tiktoken   psutil
 ```
 
 ---
@@ -167,8 +167,8 @@ Em canais privados (PM), o bot responde sem prefixo.
 
 ## 🔗 Links
 
-- API Reference: https://platform.openai.com/docs/api-reference  
-- Modelos: https://platform.openai.com/docs/models  
-- Projeto original: https://github.com/knrd1/chatgpt  
+- 📖 **API Reference**: https://platform.openai.com/docs/api-reference  
+- 🔍 **Modelos**: https://platform.openai.com/docs/models  
+- 🏠 **Repositório**: https://github.com/rauenbr/GPT-IRC-Bot-t800  
 
 > **Versão:** 1.2.1 • **Data:** 2025-04-29  
