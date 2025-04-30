@@ -1,4 +1,4 @@
-# IRC-GPT Bot (T800) – v1.2.1
+# GPT-IRC Bot (T800) – v1.2.1
 
 Um bot de IRC em Python que usa a OpenAI para responder perguntas, gerar imagens e manter contexto de conversa.  
 Fork do projeto [knrd1/chatgpt](https://github.com/knrd1/chatgpt), mantido em [rauenbr/GPT-IRC-Bot-t800](https://github.com/rauenbr/GPT-IRC-Bot-t800).
