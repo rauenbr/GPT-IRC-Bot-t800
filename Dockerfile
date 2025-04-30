@@ -1,14 +1,14 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim-buster
+# Use a imagem oficial do Python 3.10 como base
+FROM python:3.10-slim-buster
 
-# Set the working directory in the container to /app
+# Diretório de trabalho
 WORKDIR /app
 
-# Add the current directory contents into the container at /app
-ADD . /app
+# Copia todo o conteúdo para /app
+COPY . /app
 
-# Install any needed packages specified in requirements.txt
+# Instala dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Run the command to start your application
-CMD ["python", "-u", "./chatgpt.py"]
+# Define comando de inicialização
+CMD ["python3", "-u", "chat.py"]
