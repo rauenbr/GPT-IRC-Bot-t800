@@ -6,6 +6,7 @@ Controle simples de rate limit por usuário.
 from datetime import datetime, timedelta
 
 import state
+from config import MAX_MESSAGES
 
 
 def check_rate_limit(user):
@@ -18,7 +19,7 @@ def check_rate_limit(user):
         if now - t <= window
     ]
 
-    if len(state.rate_limits[user]) >= 5:
+    if len(state.rate_limits[user]) >= MAX_MESSAGES:
         return False
 
     state.rate_limits[user].append(now)

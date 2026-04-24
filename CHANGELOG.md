@@ -5,6 +5,15 @@
 Todas as alterações significativas estão registradas abaixo, em ordem decrescente de versão.
 
 ---
+## [1.3.3] – 2026-04-24  
+### Configuração
+- Atualização do `example-chat.conf` para refletir a estrutura atual real do `chat.conf`, com sanitização dos dados sensíveis.
+- Adição da nova seção `[rate_limit]` com a configuração `max_messages = 5`.
+- Leitura de `max_messages` centralizada em `config.py`, com `fallback=5`.
+
+### Rate limit
+- Ajuste do `rate_limit.py` para usar `MAX_MESSAGES` importado de `config`, preservando integralmente a lógica existente de janela, bloqueio e armazenamento de timestamps.
+---
 ## [1.3.2] – 2026-04-23  
 ### Testes automatizados
 - Implementação da suíte inicial de testes com `pytest`.
@@ -248,4 +257,3 @@ Todas as alterações significativas estão registradas abaixo, em ordem decresc
 - Tratamento de `PING/PONG`, `PRIVMSG`, logging básico de eventos e erros.
 
 ---
-

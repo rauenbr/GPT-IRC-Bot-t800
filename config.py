@@ -51,6 +51,7 @@ usage_db          = config.get('bot', 'usage_db',            fallback="usage.db"
 burst_threshold   = config.getint('bot', 'burst_threshold',  fallback=5)
 burst_window      = config.getint('bot', 'burst_window',     fallback=60)
 burst_chunk_size  = config.getint('bot', 'burst_chunk_size', fallback=5)
+MAX_MESSAGES      = config.getint('rate_limit', 'max_messages', fallback=5)
 context_mode      = config.get('bot', 'context_mode', fallback='direct').strip().lower()
 history_limit_direct = config.getint('bot', 'history_limit_direct', fallback=8)
 history_limit_channelcontext = config.getint('bot', 'history_limit_channelcontext', fallback=12)
