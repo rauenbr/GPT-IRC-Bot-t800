@@ -1,2 +1,14 @@
-chatgpt_dev.py
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+usage.db
+*.db
+
+*.log
 chat.conf
+.env
+
+*.tar.gz
+.split_generated
