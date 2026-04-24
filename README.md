@@ -24,6 +24,9 @@ Arquitetura atual:
 - **Contexto de Conversa**  
   Armazena até N mensagens por canal/usuário e prefixa `<nick>: mensagem` no prompt.
 
+- **Robustez IRC / Nickname**  
+  Faz fallback automático de nick em `433/432/436/437`, mantém o nick ativo da sessão em `state.current_nickname` e sincroniza a troca confirmada pelo servidor via evento `NICK` ou `001`.
+
 - **Burst Summarization**  
   Se X mensagens chegam em Y segundos, sintetiza um resumo automático para economizar tokens.
 
@@ -42,10 +45,10 @@ Arquitetura atual:
 - **Comandos IRC**  
   ```
   !help     — lista comandos  
-  !status   — versão, estado e tokens desde startup  
+  !status   — versão, nick ativo, estado e tokens desde startup  
   !uptime   — tempo de atividade atual  
   !model    — modelo configurado  
-  !usage    — estatísticas de uso (tokens, custo, CPU, RAM)  
+  !usage    — estatísticas de uso (tokens, custo, contexto, CPU, RAM)  
   !history  — (modo debug) exibe histórico de contexto
   ```
 
@@ -147,12 +150,27 @@ pip3 install   openai>=1.76.0   pyshorteners   python-daemon   tiktoken   psutil
 python3 chat.py
 ```
 
-### Modo daemon (produção)
-- Ajuste `debug=false` em `chat.conf`
-- Execute:
-  ```bash
-  python3 chat.py &
-  ```
+### Modo daemon / operação
+Use o helper `t800ctl`:
+
+```bash
+./t800ctl start
+./t800ctl status
+./t800ctl logs
+./t800ctl restart
+./t800ctl stop
+```
+
+Também há suporte operacional para:
+
+```bash
+./t800ctl check
+./t800ctl install-cron
+./t800ctl install-cron-log
+./t800ctl remove-cron
+```
+
+`check` sobe o bot automaticamente se ele estiver parado. `install-cron` e `install-cron-log` instalam reboot + verificação periódica via `crontab`.
 
 ---
 
@@ -161,7 +179,7 @@ python3 chat.py
 Mencione o nick (case-insensitive) terminando com `:` ou `?`:
 ```
 <user> irc-gpt bot: qual o status?
-<bot> Bot operacional • v1.3.4 • tokens=1234
+<bot> Bot v1.3.4 • nick=Terminator043 • sess up=2m 8s • mode=channelcontext • tokens sess=1234
 ```
 Em canais privados (PM), o bot responde sem prefixo.
 
