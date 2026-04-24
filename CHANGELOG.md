@@ -5,6 +5,24 @@
 Todas as alterações significativas estão registradas abaixo, em ordem decrescente de versão.
 
 ---
+## [1.3.4] – 2026-04-24  
+### Reorganização estrutural
+- Blindagem da reorganização estrutural interna sem alteração de comportamento funcional.
+- Centralização das chamadas OpenAI em `llm_client.py`.
+- Desacoplamento de `question_handler.py` e `burst.py` da API da OpenAI.
+- Melhorias defensivas no `llm_client.py` para parsing uniforme de resposta e `usage`.
+
+### Testes
+- Adição de testes com mock para sustentar a reorganização interna.
+- Nenhuma implementação de GPT-5.4 ou Responses API nesta versão.
+- Cobertura completa de llm_client com mocks
+- Testes de sucesso e falha no question_handler
+- Teste de isolamento da OpenAI (somente llm_client)
+- Testes do sistema de burst summarization
+- Validação de cenários de erro da API
+- Confirmação de isolamento da camada LLM
+- Padronização do contrato de retorno (text, usage)
+---
 ## [1.3.3] – 2026-04-24  
 ### Configuração
 - Atualização do `example-chat.conf` para refletir a estrutura atual real do `chat.conf`, com sanitização dos dados sensíveis.

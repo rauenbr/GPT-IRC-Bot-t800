@@ -1,7 +1,12 @@
-# GPT-IRC Bot (T800) – v1.2.1
+# GPT-IRC Bot (T800) – v1.3.4
 
 Um bot de IRC em Python que usa a OpenAI para responder perguntas, gerar imagens e manter contexto de conversa.  
 Fork do projeto [knrd1/chatgpt](https://github.com/knrd1/chatgpt), mantido em [rauenbr/GPT-IRC-Bot-t800](https://github.com/rauenbr/GPT-IRC-Bot-t800).
+
+Arquitetura atual:
+- `llm_client.py` é o ponto único de integração com a OpenAI.
+- `pricing.py` centraliza o cálculo de custo.
+- O projeto está organizado em módulos separados para configuração, estado, triggers, filtros, contexto, persistência e envio.
 
 ---
 
@@ -83,7 +88,7 @@ pip3 install   openai>=1.76.0   pyshorteners   python-daemon   tiktoken   psutil
 
 1. Copie o exemplo:
    ```bash
-   cp chat-example.conf chat.conf
+   cp example-chat.conf chat.conf
    ```
 2. Edite `chat.conf`, ajustando:
 
@@ -93,34 +98,44 @@ pip3 install   openai>=1.76.0   pyshorteners   python-daemon   tiktoken   psutil
 
    [chatcompletion]
    model             = gpt-4o
-   context           = Você é um assistente educativo de IRC.
-   temperature       = 0.8
-   max_tokens        = 800
+   context           = Você é Terminator, um assistente de IRC direto, eficiente e confiante.
+   temperature       = 0.9
+   max_tokens        = 12000
    top_p             = 1
    frequency_penalty = 0
    presence_penalty  = 0
    request_timeout   = 60
 
    [irc]
-   server            = irc.exemplo.net
+   server            = irc.redesul.org
    port              = 6697
    ssl               = true
-   channels          = #canal1,#canal2
-   nickname          = IRC-GPT Bot (T800)
-   ident             = T800
-   realname          = Bot de IA via ChatGPT
+   channels          = #warez,#bot,#ajuda
+   nickname          = Terminator
+   ident             = AI
+   realname          = Bot de inteligência artificial, sob o ChatGPT.
    password          =
    debug             = true
    raw               = false
 
    [bot]
-   log_file          = /var/log/irc_gpt_bot.log
-   history_limit     = 10
+   log_file          = gptirc.log
+   history_limit     = 25
    burst_threshold   = 20
    burst_window      = 60
    burst_chunk_size  = 20
    usage_db          = usage.db
    monthly_start_day = 1
+   context_mode      = channelcontext
+   history_limit_direct = 8
+   history_limit_channelcontext = 12
+   channel_history_max_chars = 200
+   assistant_history_max_chars = 180
+   question_history_max_chars = 250
+   ignore_short_channel_msgs = true
+
+   [rate_limit]
+   max_messages      = 5
    ```
 
 ---
@@ -146,7 +161,7 @@ python3 chat.py
 Mencione o nick (case-insensitive) terminando com `:` ou `?`:
 ```
 <user> irc-gpt bot: qual o status?
-<bot> Bot operacional • v1.2.1 • tokens=1234
+<bot> Bot operacional • v1.3.4 • tokens=1234
 ```
 Em canais privados (PM), o bot responde sem prefixo.
 
@@ -171,4 +186,4 @@ Em canais privados (PM), o bot responde sem prefixo.
 - 🔍 **Modelos**: https://platform.openai.com/docs/models  
 - 🏠 **Repositório**: https://github.com/rauenbr/GPT-IRC-Bot-t800  
 
-> **Versão:** 1.2.1 • **Data:** 2025-04-29  
+> **Versão:** 1.3.4 • **Data:** 2026-04-24  

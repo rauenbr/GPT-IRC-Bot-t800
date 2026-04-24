@@ -6,8 +6,6 @@ Configuração do T800 carregada a partir de chat.conf
 import configparser
 from pathlib import Path
 
-import openai
-
 # Lê o chat.conf no mesmo diretório deste arquivo
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = BASE_DIR / "chat.conf"
@@ -31,7 +29,7 @@ debug_mode        = config.getboolean('irc', 'debug', fallback=False)
 raw_mode          = config.getboolean('irc', 'raw',   fallback=False)
 
 # OpenAI
-openai.api_key    = config.get('openai', 'api_key')
+api_key           = config.get('openai', 'api_key')
 
 # ChatCompletion
 model             = config.get('chatcompletion', 'model')

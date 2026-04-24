@@ -5,8 +5,6 @@ Resumo automático de bursts de mensagens em canais.
 
 from datetime import datetime
 
-import openai
-
 import state
 from config import (
     context_mode,
@@ -18,6 +16,7 @@ from config import (
 )
 from logging_utils import log
 from storage import get_recent_history, add_history_entry, cursor, conn
+from llm_client import generate_summary
 
 
 SUMMARY_PREFIX = "[Resumido]"
@@ -87,18 +86,16 @@ def maybe_summarize_burst(target):
     log(f"[BURST PROMPT] {prompt}", "DEBUG")
 
     try:
-        resp = openai.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "Você é um resumidor de chat IRC."},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.5,
-            max_tokens=150,
-            timeout=timeout,
+        summary, _usage = generate_summary(
+            prompt,
+            {
+                "model": model,
+                "temperature": 0.5,
+                "max_tokens": 150,
+                "timeout": timeout,
+            },
         )
 
-        summary = resp.choices[0].message.content
         if not summary:
             log("[BURST ERROR] Resposta vazia da OpenAI no resumo.", "ERRO")
             return
