@@ -13,14 +13,15 @@ def check_rate_limit(user):
     now = datetime.now()
     window = timedelta(minutes=1)
 
-    state.rate_limits.setdefault(user, [])
-    state.rate_limits[user] = [
-        t for t in state.rate_limits[user]
-        if now - t <= window
-    ]
+    with state.rate_limit_lock:
+        state.rate_limits.setdefault(user, [])
+        state.rate_limits[user] = [
+            t for t in state.rate_limits[user]
+            if now - t <= window
+        ]
 
-    if len(state.rate_limits[user]) >= MAX_MESSAGES:
-        return False
+        if len(state.rate_limits[user]) >= MAX_MESSAGES:
+            return False
 
-    state.rate_limits[user].append(now)
-    return True
+        state.rate_limits[user].append(now)
+        return True

@@ -11,17 +11,39 @@ Todas as alterações significativas estão registradas abaixo, em ordem decresc
 - Centralização das chamadas OpenAI em `llm_client.py`.
 - Desacoplamento de `question_handler.py` e `burst.py` da API da OpenAI.
 - Melhorias defensivas no `llm_client.py` para parsing uniforme de resposta e `usage`.
+- Introdução de `state.current_nickname` para rastrear o nick ativo do bot durante a sessão.
+- Adição de fallback de nick em caso de `433 ERR_NICKNAMEINUSE`, com geração automática de sufixo numérico randômico e continuidade da conexão sem reconectar.
+- Expansão do fallback de nick para numerics `432`, `436` e `437`, com limite simples de tentativas antes de reconectar.
+- Introdução de helper central para nick ativo e ajuste de PM, `KICK`, triggers, filtros e `!status` para considerar o nick ativo além do nick configurado.
+- Sincronização do nick ativo ao receber evento `NICK` do próprio bot.
+- Sincronização complementar do nick ativo via `001` quando o servidor confirma o nick aceito sem emitir um evento `NICK` separado antes do registro completo.
+- Ajuste de consistência do fluxo de troca de nick para só atualizar `state.current_nickname` após confirmação do servidor via evento `NICK`.
+- Refinamento do tratamento de evento `NICK` para aceitar transição entre nick configurado e nick ativo durante a troca.
+- Proteção do rate limit com lock dedicado para reduzir risco de corrida sob concorrência.
+- Ajustes incrementais em `commands.py`, incluindo `!status` com `mode=<context_mode>` e evolução de `!usage` para exibir rótulos mais claros e a configuração ativa de contexto do bot.
+- Endurecimento de `!usage` para tratar metadados ausentes ou inválidos sem quebrar a execução, exibindo `indisponível` quando necessário.
+- Consolidação da cobertura dos comandos administrativos sem alterar a interface pública atual, mantendo `!clear` funcional porém ainda oculto em `!help`.
+- Reforço de robustez do loop principal em `chat.py`, com buffer para stream TCP parcial, extração segura de linhas completas e isolamento de falhas de parsing/processamento por linha.
+- Alteração do tratamento de `KICK` para rejoin leve no canal, sem reconnect completo.
+- Proteção do despacho assíncrono ao executor e do armazenamento passivo de contexto para evitar que falhas pontuais derrubem o loop IRC.
+- Robustez adicional em `periods.py`, com cálculo centralizado do ciclo mensal e tolerância a `state.last_reset_monthly = None`.
+- Robustez adicional em `storage.py`, reutilizando a lógica consolidada de ciclo mensal e tolerando timestamps inválidos em histórico/metadados sem quebrar carga de estado.
+- Robustez adicional em `lifecycle.py`, com shutdown idempotente, protegido por helpers seguros, timeout no lock IRC e encerramento independente de IRC, executor e banco.
 
 ### Testes
 - Adição de testes com mock para sustentar a reorganização interna.
+- Cobertura de `llm_client.py`, `question_handler.py`, `burst.py` e verificação estrutural de isolamento da OpenAI.
+- Adição de testes para `generate_random_nick()`, `irc_send_raw()`, parser de numeric `433`, `commands.py` e triggers com nick randômico ativo.
+- Cobertura direta do loop IRC em `chat.py`, incluindo `433`, `432`, PM com nick ativo, `KICK`, `PING/PONG`, `ERROR`, `JOIN`, evento `NICK` e fluxo sequencial de troca de nick.
+- Teste para garantir que mensagens do próprio bot com nick randômico ativo não entrem no contexto passivo.
+- Cobertura dos helpers de `irc_client.py`, incluindo `join_channels()`, `connect()` com e sem SSL/password e `reconnect()` com sucesso e falha no `close()`.
+- Cobertura de `response_pipeline.send_message()` para envio normal, mensagem vazia, IRC desconectado e falha no envio.
+- Expansão da cobertura de `commands.py` para `!help`, `!model`, `!uptime`, `!history`, `!clear`, comando desconhecido e cenários de `!usage` com metadados válidos, `None` e inválidos.
+- Cobertura completa de `periods.py` para `init_period_state()` e `update_periods()`, incluindo virada de mês, janeiro voltando para dezembro e estado mensal ausente.
+- Cobertura completa de `storage.py` com SQLite em memória para metadata, histórico, limites por target e `load_metadata_and_counters()`.
+- Cobertura de `lifecycle.py` para shutdown com IRC conectado/desconectado, falha no `QUIT`, falha no `close()`, lock indisponível, reentrância e registro de sinais.
+- Aumento da cobertura e da estabilidade geral da base.
 - Nenhuma implementação de GPT-5.4 ou Responses API nesta versão.
-- Cobertura completa de llm_client com mocks
-- Testes de sucesso e falha no question_handler
-- Teste de isolamento da OpenAI (somente llm_client)
-- Testes do sistema de burst summarization
-- Validação de cenários de erro da API
-- Confirmação de isolamento da camada LLM
-- Padronização do contrato de retorno (text, usage)
 ---
 ## [1.3.3] – 2026-04-24  
 ### Configuração

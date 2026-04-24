@@ -12,13 +12,14 @@ from config import (
     ignore_short_channel_msgs,
     channel_min_msg_len,
 )
+from nick_utils import get_active_nickname
 
 
 def should_store_passive_channel_message(user, msg_text, triggered):
     if context_mode != "channelcontext":
         return False
 
-    if user == nickname:
+    if user == nickname or user == get_active_nickname():
         return False
 
     if triggered:

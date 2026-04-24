@@ -26,12 +26,15 @@ start_time = datetime.now()
 
 # Estado do IRC
 irc = None
+current_nickname = None
 
 # Rate limit por usuário
 rate_limits = {}
+rate_limit_lock = threading.Lock()
 
 # Executor para processar perguntas em paralelo
 executor = ThreadPoolExecutor(max_workers=3)
+nick_retry_count = 0
 
 # Locks globais
 irc_lock = threading.Lock()

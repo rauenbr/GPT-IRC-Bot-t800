@@ -17,6 +17,7 @@ from config import (
     context_mode,
 )
 from logging_utils import log
+from periods import get_monthly_cycle_start
 
 # -------------------------
 # SQLite setup
@@ -56,6 +57,15 @@ conn.commit()
 # Metadata init & counters
 # -------------------------
 
+
+def _safe_fromisoformat(value):
+    try:
+        if not value:
+            return None
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
+
 def set_meta(key, value):
     with state.db_lock:
         cursor.execute(
@@ -85,12 +95,13 @@ def load_metadata_and_counters():
             conn.commit()
         set_meta("last_context", context_message)
 
-    now = datetime.now().isoformat()
+    now_dt = datetime.now()
+    now = now_dt.isoformat()
     if not get_meta("first_init"):
         set_meta("first_init", now)
     set_meta("last_init", now)
 
-    day_start = datetime.now().replace(
+    day_start = now_dt.replace(
         hour=0, minute=0, second=0, microsecond=0
     ).isoformat()
 
@@ -104,21 +115,13 @@ def load_metadata_and_counters():
     state.tokens_today = tok_sum or 0
     state.cost_today = cost_sum or 0.0
 
-    m = datetime.now()
-    if m.day >= monthly_start_day:
-        m_start = m.replace(
-            day=monthly_start_day,
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    else:
-        pm = m.month - 1 or 12
-        py = m.year - 1 if m.month == 1 else m.year
-        m_start = m.replace(
-            year=py,
-            month=pm,
-            day=monthly_start_day,
-            hour=0, minute=0, second=0, microsecond=0
-        )
+    monthly_cycle_start = get_monthly_cycle_start(now_dt.date(), monthly_start_day)
+    m_start = now_dt.replace(
+        year=monthly_cycle_start.year,
+        month=monthly_cycle_start.month,
+        day=monthly_cycle_start.day,
+        hour=0, minute=0, second=0, microsecond=0
+    )
 
     with state.db_lock:
         cursor.execute(
@@ -134,7 +137,8 @@ def load_metadata_and_counters():
         cursor.execute("SELECT MAX(timestamp) FROM history")
         row = cursor.fetchone()[0]
 
-    if row and (datetime.now() - datetime.fromisoformat(row)) > timedelta(minutes=30):
+    last_history_dt = _safe_fromisoformat(row)
+    if last_history_dt and (now_dt - last_history_dt) > timedelta(minutes=30):
         with state.db_lock:
             cursor.execute("DELETE FROM history")
             conn.commit()
@@ -186,11 +190,16 @@ def get_recent_history(target, limit=None):
         """, (target, limit))
         rows = cursor.fetchall()
 
-    return [
-        {
-            "role": r,
-            "content": c,
-            "timestamp": datetime.fromisoformat(t)
-        }
-        for r, c, t in reversed(rows)
-    ]
+    result = []
+    for r, c, t in reversed(rows):
+        parsed = _safe_fromisoformat(t)
+        if parsed is None:
+            continue
+        result.append(
+            {
+                "role": r,
+                "content": c,
+                "timestamp": parsed,
+            }
+        )
+    return result

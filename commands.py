@@ -8,11 +8,32 @@ import resource
 
 import state
 from constants import SCRIPT_VERSION
-from config import model, monthly_start_day, debug_mode
+from config import (
+    model,
+    monthly_start_day,
+    debug_mode,
+    context_mode,
+    history_limit_direct,
+    history_limit_channelcontext,
+    channel_history_max_chars,
+    assistant_history_max_chars,
+    question_history_max_chars,
+)
+from nick_utils import get_active_nickname
 from utils import fmt_delta
 from response_pipeline import send_message
 from storage import get_meta, get_recent_history, cursor, conn
 from logging_utils import log
+
+
+def _format_meta_datetime(label, value, now):
+    try:
+        if not value:
+            raise ValueError("metadata ausente")
+        parsed = datetime.fromisoformat(value)
+        return f"{label} {parsed.strftime('%Y-%m-%d %H:%M')}Z ({fmt_delta(now - parsed)} atrás)"
+    except Exception:
+        return f"{label} indisponível"
 
 
 def handle_command(cmd, target):
@@ -27,7 +48,7 @@ def handle_command(cmd, target):
         up = now - state.start_time
         send_message(
             target,
-            f"Bot v{SCRIPT_VERSION} • sess up={fmt_delta(up)} • "
+            f"Bot v{SCRIPT_VERSION} • nick={get_active_nickname()} • sess up={fmt_delta(up)} • mode={context_mode} • "
             f"tokens sess={state.total_tokens_used} (~${state.total_cost_used:.4f}) • model={model}"
         )
 
@@ -45,24 +66,23 @@ def handle_command(cmd, target):
             f"Mês desde dia {monthly_start_day}: {state.tokens_month} tok (~${state.cost_month:.4f})"
         )
 
-        first = datetime.fromisoformat(get_meta("first_init"))
-        last_init = datetime.fromisoformat(get_meta("last_init"))
-        last_conn = datetime.fromisoformat(get_meta("last_conn"))
-
         send_message(
             target,
-            f"Primeiro init: {first.strftime('%Y-%m-%d %H:%M')}Z "
-            f"({fmt_delta(now - first)} atrás)"
+            _format_meta_datetime("Primeiro registro DB:", get_meta("first_init"), now)
         )
         send_message(
             target,
-            f"Último init: {last_init.strftime('%Y-%m-%d %H:%M')}Z "
-            f"({fmt_delta(now - last_init)} atrás)"
+            _format_meta_datetime("Último start do bot:", get_meta("last_init"), now)
         )
         send_message(
             target,
-            f"Última conexão: {last_conn.strftime('%Y-%m-%d %H:%M')}Z "
-            f"({fmt_delta(now - last_conn)} atrás)"
+            _format_meta_datetime("Última conexão IRC:", get_meta("last_conn"), now)
+        )
+        send_message(
+            target,
+            f"Contexto: mode={context_mode} | "
+            f"hist=direct:{history_limit_direct}/channel:{history_limit_channelcontext} | "
+            f"chars=chan:{channel_history_max_chars}/asst:{assistant_history_max_chars}/q:{question_history_max_chars}"
         )
 
         li = get_meta("last_init")

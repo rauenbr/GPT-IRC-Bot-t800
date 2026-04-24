@@ -1,0 +1,201 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+PID_FILE="$BASE_DIR/t800.pid"
+LOG_DIR="$BASE_DIR/logs"
+LOG_FILE="$LOG_DIR/t800.log"
+
+mkdir -p "$LOG_DIR"
+
+detect_python() {
+    if [ -x "$BASE_DIR/venv/bin/python" ]; then
+        echo "$BASE_DIR/venv/bin/python"
+    elif command -v python3 >/dev/null 2>&1; then
+        command -v python3
+    else
+        echo ""
+    fi
+}
+
+is_running() {
+    [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null
+}
+
+start() {
+    if is_running; then
+        echo "T800 já está rodando. PID: $(cat "$PID_FILE")"
+        return 0
+    fi
+
+    PYTHON="$(detect_python)"
+
+    if [ -z "$PYTHON" ]; then
+        echo "Python não encontrado. Instale ou configure direito."
+        exit 1
+    fi
+
+    echo "Usando Python: $PYTHON"
+
+    # Verificação mínima de ambiente
+    if ! "$PYTHON" -c "import sqlite3" 2>/dev/null; then
+        echo "Ambiente Python inválido."
+        exit 1
+    fi
+
+    cd "$BASE_DIR"
+
+    nohup "$PYTHON" "$BASE_DIR/chat.py" >> "$LOG_FILE" 2>&1 &
+
+    echo $! > "$PID_FILE"
+
+    sleep 1
+
+    if is_running; then
+        echo "T800 iniciado com sucesso. PID: $(cat "$PID_FILE")"
+        echo "Log: $LOG_FILE"
+    else
+        echo "Falha ao iniciar. Veja o log:"
+        echo "tail -f $LOG_FILE"
+        exit 1
+    fi
+}
+
+stop() {
+    if ! [ -f "$PID_FILE" ]; then
+        echo "PID file não encontrado. Provavelmente não está rodando."
+        return 0
+    fi
+
+    PID="$(cat "$PID_FILE")"
+
+    if kill -0 "$PID" 2>/dev/null; then
+        echo "Parando T800 (PID: $PID)..."
+        kill "$PID"
+
+        for i in {1..10}; do
+            if kill -0 "$PID" 2>/dev/null; then
+                sleep 1
+            else
+                break
+            fi
+        done
+
+        if kill -0 "$PID" 2>/dev/null; then
+            echo "Processo não encerrou, forçando..."
+            kill -9 "$PID"
+        fi
+
+        echo "T800 parado."
+    else
+        echo "Processo não está rodando, mas PID file existe."
+    fi
+
+    rm -f "$PID_FILE"
+}
+
+status() {
+    if is_running; then
+        echo "T800 está rodando. PID: $(cat "$PID_FILE")"
+    else
+        echo "T800 não está rodando."
+    fi
+}
+
+restart() {
+    stop
+    sleep 2
+    start
+}
+
+logs() {
+    tail -f "$LOG_FILE"
+}
+
+check() {
+    if is_running; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') T800 ok. PID: $(cat "$PID_FILE")"
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') T800 não está rodando. Iniciando..."
+        start
+    fi
+}
+
+install_cron_log() {
+    REBOOT_CMD="@reboot sleep 15 && $BASE_DIR/t800ctl start >> $BASE_DIR/logs/cron.log 2>&1"
+    CHECK_CMD="*/5 * * * * $BASE_DIR/t800ctl check >> $BASE_DIR/logs/cron.log 2>&1"
+
+    CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
+
+    CLEAN_CRON="$(echo "$CURRENT_CRON" | grep -v "$BASE_DIR/t800ctl start" | grep -v "$BASE_DIR/t800ctl check")"
+
+    (echo "$CLEAN_CRON"; echo "$REBOOT_CMD"; echo "$CHECK_CMD") | crontab -
+
+    echo "Cron instalado com reboot + check a cada 5 minutos:"
+    echo "$REBOOT_CMD"
+    echo "$CHECK_CMD"
+}
+
+install_cron() {
+    REBOOT_CMD="@reboot sleep 15 && $BASE_DIR/t800ctl start"
+    CHECK_CMD="*/5 * * * * $BASE_DIR/t800ctl check"
+
+    CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
+
+    CLEAN_CRON="$(echo "$CURRENT_CRON" | grep -v "$BASE_DIR/t800ctl start" | grep -v "$BASE_DIR/t800ctl check")"
+
+    (echo "$CLEAN_CRON"; echo "$REBOOT_CMD"; echo "$CHECK_CMD") | crontab -
+
+    echo "Cron instalado com reboot + check a cada 5 minutos:"
+    echo "$REBOOT_CMD"
+    echo "$CHECK_CMD"
+}
+
+remove_cron() {
+    CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
+
+    NEW_CRON="$(echo "$CURRENT_CRON" | grep -v "$BASE_DIR/t800ctl start" | grep -v "$BASE_DIR/t800ctl check")"
+
+    if [ "$CURRENT_CRON" = "$NEW_CRON" ]; then
+        echo "Nenhuma entrada encontrada para remover."
+        return 0
+    fi
+
+    echo "$NEW_CRON" | crontab -
+
+    echo "Entradas do T800 removidas do crontab."
+}
+
+case "${1:-}" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    status)
+        status
+        ;;
+    logs)
+        logs
+        ;;
+    check)
+        check
+        ;;
+    install-cron)
+        install_cron
+        ;;
+    install-cron-log)
+        install_cron_log
+        ;;
+    remove-cron)
+        remove_cron
+       ;;
+    *)
+        echo "Uso: $0 {start|stop|restart|status|logs|install-cron|install-cron-log|remove-cron}"
+        exit 1
+        ;;
+esac
